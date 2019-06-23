@@ -1,0 +1,16 @@
+{
+  "name": "sitemap-parser",
+  "version": "0.1.0-rc1",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "dependencies": {
+    "typescript": "3.5.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "build": "tsc --outDir dist --m CommonJs --resolveJsonModule -d src/index.ts"
+  },
+  "files": [
+    "dist"
+  ]
+}
