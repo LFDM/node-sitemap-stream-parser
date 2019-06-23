@@ -33,7 +33,7 @@ export const parseSitemapFromUrl = (
   return new Promise((resolve, reject) => {
     const stream = request.get(url, { gzip: true });
     stream.on('error', reject);
-    return parseSitemap(url, stream, sitemapIndex).then(resolve);
+    return parse(url, stream, sitemapIndex).then(resolve);
   });
 };
 
@@ -45,7 +45,7 @@ export const parseSitemapsFromUrls = (urls: string[]) => {
 };
 
 export const parseSitemapFromString = (baseUrl: string, xml: string) => {
-  return parseSitemap(baseUrl, toReadableStream(xml), {});
+  return parse(baseUrl, toReadableStream(xml), {});
 };
 
 const emptyPage = (baseUrl: string): IPage => ({
@@ -55,6 +55,13 @@ const emptyPage = (baseUrl: string): IPage => ({
 });
 
 export const parseSitemap = (
+  baseUrl: string,
+  xmlStream: Stream
+): Promise<IPage[]> => {
+  return parse(baseUrl, xmlStream, {});
+};
+
+const parse = (
   baseUrl: string,
   xmlStream: Stream,
   visitedSitemaps: SitemapIndex
