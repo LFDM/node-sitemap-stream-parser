@@ -138,7 +138,7 @@ export const parseSitemap = (
     parserStream.on('end', () => {
       console.log('done'!);
       if (state.isSitemapIndex) {
-        // iterate once more
+        parseSitemapsFromUrls(state.sitemaps).then(resolve);
         return;
       }
 
