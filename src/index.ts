@@ -32,7 +32,7 @@ request.defaults({
   timeout: parseInt(process.env.SITEMAP_PARSER_TIMEOUT || '', 10) || 60000
 });
 
-export const parseSitemapFromUrl = (
+export const collectFromUrl = (
   url: string,
   options: Partial<IOptions> = {},
   sitemapIndex: SitemapIndex = {}
@@ -40,37 +40,37 @@ export const parseSitemapFromUrl = (
   return new Promise((resolve, reject) => {
     const stream = request.get(url, { gzip: true });
     stream.on('error', reject);
-    return parse(url, stream, options, sitemapIndex).then(resolve);
+    return _collect(url, stream, options, sitemapIndex).then(resolve);
   });
 };
 
-export const parseSitemapsFromUrls = (
+export const collectFromUrls = (
   urls: string[],
   options: Partial<IOptions> = {},
   sitemapIndex: SitemapIndex = {}
 ) => {
   return Promise.all(
-    urls.map(url => parseSitemapFromUrl(url, options, sitemapIndex))
+    urls.map(url => collectFromUrl(url, options, sitemapIndex))
   ).then(flatten);
 };
 
-export const parseSitemapFromString = (
+export const collectFromString = (
   baseUrl: string,
   xml: string,
   options: Partial<IOptions> = {}
 ) => {
-  return parse(baseUrl, toReadableStream(xml), options, {});
+  return _collect(baseUrl, toReadableStream(xml), options, {});
 };
 
-export const parseSitemap = (
+export const collect = (
   baseUrl: string,
   xmlStream: Stream,
   options: Partial<IOptions> = {}
 ): Promise<IPage[]> => {
-  return parse(baseUrl, xmlStream, options, {});
+  return _collect(baseUrl, xmlStream, options, {});
 };
 
-const parse = (
+const _collect = (
   baseUrl: string,
   xmlStream: Stream,
   options: Partial<IOptions>,
@@ -165,9 +165,7 @@ const parse = (
     parserStream.on('error', reject);
     parserStream.on('end', () => {
       if (state.isSitemapIndex) {
-        parseSitemapsFromUrls(state.sitemaps, options, visitedSitemaps).then(
-          resolve
-        );
+        collectFromUrls(state.sitemaps, options, visitedSitemaps).then(resolve);
         return;
       }
 

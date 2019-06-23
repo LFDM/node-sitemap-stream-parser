@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { parseSitemapFromString } from '.';
+import { collectFromString } from '.';
 
 const BASE = path.join(__dirname, 'examples');
 const readFile = (p: string) => fs.readFileSync(p).toString();
@@ -9,7 +9,7 @@ const sitemap = readFile(path.join(BASE, 'sitemap.xml'));
 
 describe('parseSitemapsFromString', () => {
   it('runs', () => {
-    return parseSitemapFromString('http//example.com', sitemap).then(pages => {
+    return collectFromString('http//example.com', sitemap).then(pages => {
       expect(pages).toHaveLength(2);
 
       const [p1, p2] = pages;
