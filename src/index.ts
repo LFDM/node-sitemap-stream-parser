@@ -7,11 +7,25 @@ import { IOptions, IPage } from './types';
 type SitemapIndex = { [url: string]: boolean };
 type PageCallback = (page: IPage) => void;
 
-const toReadableStream = (str: string) => {
+request.defaults({
+  headers: {
+    'user-agent': process.env.SITEMAP_PARSER_USER_AGENT || 'sitemap-parser'
+  },
+  agentOptions: {
+    keepAlive: true
+  },
+  timeout: parseInt(process.env.SITEMAP_PARSER_TIMEOUT || '', 10) || 60000
+});
+
+const toStreamFromString = (str: string) => {
   const stream = new Stream.Readable();
   stream.push(str);
   stream.push(null);
   return stream;
+};
+
+const toStreamFromUrl = (url: string) => {
+  return request.get(url, { gzip: true });
 };
 
 const emptyPage = (baseUrl: string): IPage => ({
@@ -27,24 +41,13 @@ const withPageCollector = <T>(
   return fn(page => pages.push(page)).then(() => pages);
 };
 
-request.defaults({
-  headers: {
-    'user-agent': process.env.SITEMAP_PARSER_USER_AGENT || 'sitemap-parser'
-  },
-  agentOptions: {
-    keepAlive: true
-  },
-  timeout: parseInt(process.env.SITEMAP_PARSER_TIMEOUT || '', 10) || 60000
-});
-
 export const parseFromUrl = (
   url: string,
   onPage: (page: IPage) => void,
   options: Partial<IOptions> = {},
   sitemapIndex: SitemapIndex = {}
 ) => {
-  const stream = request.get(url, { gzip: true });
-  return _parse(url, stream, options, sitemapIndex, onPage);
+  return _parse(url, toStreamFromUrl(url), options, sitemapIndex, onPage);
 };
 
 export const parseFromUrls = (
@@ -64,7 +67,7 @@ export const parseFromString = (
   onPage: PageCallback,
   options: Partial<IOptions> = {}
 ): Promise<void> => {
-  return _parse(baseUrl, toReadableStream(xml), options, {}, onPage);
+  return _parse(baseUrl, toStreamFromString(xml), options, {}, onPage);
 };
 
 export const parse = (
