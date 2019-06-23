@@ -1,0 +1,20 @@
+
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type="text/xsl" href="//example.com/main-sitemap.xsl"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+	<sitemap>
+		<loc>https://example.com/post-sitemap.xml</loc>
+		<lastmod>2019-06-22T17:58:58-07:00</lastmod>
+	</sitemap>
+	<sitemap>
+		<loc>https://example.com/page-sitemap.xml</loc>
+		<lastmod>2019-04-18T13:47:28-07:00</lastmod>
+	</sitemap>
+	<sitemap>
+		<loc>https://example.com/category-sitemap.xml</loc>
+		<lastmod>2019-06-22T17:58:58-07:00</lastmod>
+	</sitemap>
+	<sitemap>
+		<loc>https://example.com/post_tag-sitemap.xml</loc>
+		<lastmod>2019-06-22T17:58:58-07:00</lastmod>
+	</sitemap>
+</sitemapindex>
