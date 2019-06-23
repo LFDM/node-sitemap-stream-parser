@@ -30,10 +30,12 @@ describe('collectFromString', () => {
 });
 
 describe('collectSitemapsFromRobots', () => {
-  const actual = collectSitemapsFromRobots(robots);
-  const expected = [
-    'http://www.example.com/sitemap1.xml',
-    'http://www.example.com/sitemap2.xml'
-  ];
-  expect(actual).toEqual(expected);
+  it('works', () => {
+    const actual = collectSitemapsFromRobots(robots);
+    const expected = [
+      'http://www.example.com/sitemap1.xml',
+      'http://www.example.com/sitemap2.xml'
+    ];
+    expect(actual).toEqual(expected);
+  });
 });
