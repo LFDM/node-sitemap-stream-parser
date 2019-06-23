@@ -7,7 +7,7 @@ const readFile = (p: string) => fs.readFileSync(p).toString();
 
 const sitemap = readFile(path.join(BASE, 'sitemap.xml'));
 
-describe('parseSitemapsFromString', () => {
+describe('collectFromString', () => {
   it('runs', () => {
     return collectFromString('http//example.com', sitemap).then(pages => {
       expect(pages).toHaveLength(2);

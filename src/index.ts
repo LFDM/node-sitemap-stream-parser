@@ -5,9 +5,7 @@ import urlParser from 'url';
 import { IOptions, IPage } from './types';
 
 type SitemapIndex = { [url: string]: boolean };
-
-const flatten = <T>(lists: T[][]): T[] =>
-  lists.reduce((r, l) => r.concat(l), []);
+type PageCallback = (page: IPage) => void;
 
 const toReadableStream = (str: string) => {
   const stream = new Stream.Readable();
@@ -22,6 +20,13 @@ const emptyPage = (baseUrl: string): IPage => ({
   sitemapUrl: baseUrl
 });
 
+const withPageCollector = <T>(
+  fn: (onPage: PageCallback) => Promise<T>
+): Promise<IPage[]> => {
+  const pages: IPage[] = [];
+  return fn(page => pages.push(page)).then(() => pages);
+};
+
 request.defaults({
   headers: {
     'user-agent': process.env.SITEMAP_PARSER_USER_AGENT || 'sitemap-parser'
@@ -32,16 +37,58 @@ request.defaults({
   timeout: parseInt(process.env.SITEMAP_PARSER_TIMEOUT || '', 10) || 60000
 });
 
+export const parseFromUrl = (
+  url: string,
+  onPage: (page: IPage) => void,
+  options: Partial<IOptions> = {},
+  sitemapIndex: SitemapIndex = {}
+) => {
+  return new Promise((resolve, reject) => {
+    const stream = request.get(url, { gzip: true });
+    stream.on('error', reject);
+    return _parse(url, stream, options, sitemapIndex, onPage).then(
+      () => resolve
+    );
+  });
+};
+
+export const parseFromUrls = (
+  urls: string[],
+  onPage: (page: IPage) => void,
+  options: Partial<IOptions> = {},
+  sitemapIndex: SitemapIndex = {}
+) => {
+  return Promise.all(
+    urls.map(url => parseFromUrl(url, onPage, options, sitemapIndex))
+  );
+};
+
+export const parseFromString = (
+  baseUrl: string,
+  xml: string,
+  onPage: PageCallback,
+  options: Partial<IOptions> = {}
+): Promise<void> => {
+  return _parse(baseUrl, toReadableStream(xml), options, {}, onPage);
+};
+
+export const parse = (
+  baseUrl: string,
+  xmlStream: Stream,
+  onPage: PageCallback,
+  options: Partial<IOptions> = {}
+): Promise<void> => {
+  return _parse(baseUrl, xmlStream, options, {}, onPage);
+};
+
 export const collectFromUrl = (
   url: string,
   options: Partial<IOptions> = {},
   sitemapIndex: SitemapIndex = {}
 ): Promise<IPage[]> => {
-  return new Promise((resolve, reject) => {
-    const stream = request.get(url, { gzip: true });
-    stream.on('error', reject);
-    return _collect(url, stream, options, sitemapIndex).then(resolve);
-  });
+  return withPageCollector(onPage =>
+    parseFromUrl(url, onPage, options, sitemapIndex)
+  );
 };
 
 export const collectFromUrls = (
@@ -49,9 +96,9 @@ export const collectFromUrls = (
   options: Partial<IOptions> = {},
   sitemapIndex: SitemapIndex = {}
 ) => {
-  return Promise.all(
-    urls.map(url => collectFromUrl(url, options, sitemapIndex))
-  ).then(flatten);
+  return withPageCollector(onPage =>
+    parseFromUrls(urls, onPage, options, sitemapIndex)
+  );
 };
 
 export const collectFromString = (
@@ -59,7 +106,9 @@ export const collectFromString = (
   xml: string,
   options: Partial<IOptions> = {}
 ) => {
-  return _collect(baseUrl, toReadableStream(xml), options, {});
+  return withPageCollector(onPage =>
+    parseFromString(baseUrl, xml, onPage, options)
+  );
 };
 
 export const collect = (
@@ -67,15 +116,18 @@ export const collect = (
   xmlStream: Stream,
   options: Partial<IOptions> = {}
 ): Promise<IPage[]> => {
-  return _collect(baseUrl, xmlStream, options, {});
+  return withPageCollector(onPage =>
+    parse(baseUrl, xmlStream, onPage, options)
+  );
 };
 
-const _collect = (
+const _parse = (
   baseUrl: string,
   xmlStream: Stream,
   options: Partial<IOptions>,
-  visitedSitemaps: SitemapIndex
-): Promise<IPage[]> => {
+  visitedSitemaps: SitemapIndex,
+  onPage: (page: IPage) => void
+): Promise<void> => {
   const opts: IOptions = {
     checkSitemap: () => true,
     checkUrl: () => true,
@@ -83,7 +135,7 @@ const _collect = (
   };
 
   if (visitedSitemaps[baseUrl] || !opts.checkSitemap(baseUrl)) {
-    return Promise.resolve([]);
+    return Promise.resolve();
   }
 
   visitedSitemaps[baseUrl] = true;
@@ -97,8 +149,6 @@ const _collect = (
       isSitemapIndex: false,
 
       currentPage: emptyPage(baseUrl),
-      pages: [] as IPage[],
-
       sitemaps: [] as string[]
     };
 
@@ -130,8 +180,9 @@ const _collect = (
     parserStream.on('closetag', tag => {
       if (tag === 'url') {
         state.url = false;
-        if (opts.checkUrl(state.currentPage.url))
-          state.pages.push(state.currentPage);
+        if (opts.checkUrl(state.currentPage.url)) {
+          onPage(state.currentPage);
+        }
         state.currentPage = emptyPage(baseUrl);
       }
 
@@ -165,11 +216,13 @@ const _collect = (
     parserStream.on('error', reject);
     parserStream.on('end', () => {
       if (state.isSitemapIndex) {
-        collectFromUrls(state.sitemaps, options, visitedSitemaps).then(resolve);
+        parseFromUrls(state.sitemaps, onPage, options, visitedSitemaps).then(
+          () => resolve()
+        );
         return;
       }
 
-      resolve(state.pages);
+      resolve();
     });
 
     xmlStream.pipe(parserStream);
