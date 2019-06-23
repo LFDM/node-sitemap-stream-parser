@@ -5,6 +5,6 @@ export interface IPage {
 }
 
 export interface IOptions {
-  checkSitemap?: (url: string) => boolean;
-  checkUrl?: (url: string) => boolean;
+  checkSitemap: (url: string) => boolean;
+  checkUrl: (url: string) => boolean;
 }
