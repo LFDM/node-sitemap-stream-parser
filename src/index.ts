@@ -43,13 +43,8 @@ export const parseFromUrl = (
   options: Partial<IOptions> = {},
   sitemapIndex: SitemapIndex = {}
 ) => {
-  return new Promise((resolve, reject) => {
-    const stream = request.get(url, { gzip: true });
-    stream.on('error', reject);
-    return _parse(url, stream, options, sitemapIndex, onPage).then(
-      () => resolve
-    );
-  });
+  const stream = request.get(url, { gzip: true });
+  return _parse(url, stream, options, sitemapIndex, onPage);
 };
 
 export const parseFromUrls = (
