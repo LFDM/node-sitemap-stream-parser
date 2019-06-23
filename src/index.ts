@@ -1,7 +1,7 @@
-import request from 'request';
-import sax from 'sax';
+import * as request from 'request';
+import * as sax from 'sax';
 import { Stream } from 'stream';
-import urlParser from 'url';
+import * as urlParser from 'url';
 import { IOptions, IPage } from './types';
 
 type SitemapIndex = { [url: string]: boolean };
