@@ -34,8 +34,8 @@ const emptyPage = (baseUrl: string): IPage => ({
   sitemapUrl: baseUrl
 });
 
-const withPageCollector = <T>(
-  fn: (onPage: PageCallback) => Promise<T>
+const withPageCollector = (
+  fn: (onPage: PageCallback) => Promise<any>
 ): Promise<IPage[]> => {
   const pages: IPage[] = [];
   return fn(page => pages.push(page)).then(() => pages);
@@ -66,7 +66,7 @@ export const parseFromString = (
   xml: string,
   onPage: PageCallback,
   options: Partial<IOptions> = {}
-): Promise<void> => {
+) => {
   return _parse(baseUrl, toStreamFromString(xml), options, {}, onPage);
 };
 
@@ -75,7 +75,7 @@ export const parse = (
   xmlStream: Stream,
   onPage: PageCallback,
   options: Partial<IOptions> = {}
-): Promise<void> => {
+) => {
   return _parse(baseUrl, xmlStream, options, {}, onPage);
 };
 
@@ -83,7 +83,7 @@ export const collectFromUrl = (
   url: string,
   options: Partial<IOptions> = {},
   sitemapIndex: SitemapIndex = {}
-): Promise<IPage[]> => {
+) => {
   return withPageCollector(onPage =>
     parseFromUrl(url, onPage, options, sitemapIndex)
   );
@@ -113,7 +113,7 @@ export const collect = (
   baseUrl: string,
   xmlStream: Stream,
   options: Partial<IOptions> = {}
-): Promise<IPage[]> => {
+) => {
   return withPageCollector(onPage =>
     parse(baseUrl, xmlStream, onPage, options)
   );
