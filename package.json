@@ -4,9 +4,14 @@
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "dependencies": {
+    "request": "^2.88.0",
+    "sax": "^1.2.4",
     "typescript": "3.5.2"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@types/request": "^2.48.1",
+    "@types/sax": "^1.2.0"
+  },
   "scripts": {
     "build": "tsc --outDir dist --m CommonJs --resolveJsonModule -d src/index.ts"
   },
