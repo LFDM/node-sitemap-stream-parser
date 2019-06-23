@@ -1,5 +1,5 @@
 {
-  "name": "sitemap-parser",
+  "name": "node-sitemap-stream-parser",
   "version": "0.1.0-rc1",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
