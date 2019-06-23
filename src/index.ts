@@ -138,7 +138,7 @@ const _collect = (
       if (tag === 'loc') {
         state.loc = false;
       }
-      if (tag == 'lastmod') {
+      if (tag === 'lastmod') {
         state.lastmod = false;
       }
     });
