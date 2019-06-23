@@ -119,6 +119,26 @@ export const collect = (
   );
 };
 
+export const collectSitemapsFromRobots = (url: string): Promise<string[]> => {
+  return new Promise((resolve, reject) => {
+    request.get(url, (err, res, body: string) => {
+      if (err) {
+        return reject(err);
+      }
+      if (res.statusCode !== 200) {
+        return reject(`status code: ${res.statusCode}`);
+      }
+      const matches: string[] = [];
+      body.replace(/^Sitemap:\s?([^\s]+)$/gim, (m, p1) => {
+        matches.push(p1);
+        return m;
+      });
+
+      resolve(matches);
+    });
+  });
+};
+
 const _parse = (
   baseUrl: string,
   xmlStream: Stream,
