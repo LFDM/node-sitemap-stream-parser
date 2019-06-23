@@ -51,7 +51,7 @@ export const parseSitemapFromString = (baseUrl: string, xml: string) => {
 const emptyPage = (baseUrl: string): IPage => ({
   url: '',
   lastModified: '',
-  src: baseUrl
+  sitemapUrl: baseUrl
 });
 
 export const parseSitemap = (
