@@ -10,10 +10,12 @@
   },
   "devDependencies": {
     "@types/request": "^2.48.1",
-    "@types/sax": "^1.2.0"
+    "@types/sax": "^1.2.0",
+    "ts-node": "^8.3.0"
   },
   "scripts": {
-    "build": "tsc --outDir dist --m CommonJs --resolveJsonModule -d src/index.ts"
+    "build": "tsc --outDir dist --m CommonJs --resolveJsonModule -d src/index.ts",
+    "example": "ts-node src/examples/example.ts"
   },
   "files": [
     "dist"
