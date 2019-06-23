@@ -2,7 +2,7 @@ import request from 'request';
 import sax from 'sax';
 import { Stream } from 'stream';
 import urlParser from 'url';
-import { IPage } from './types';
+import { IOptions, IPage } from './types';
 
 type SitemapIndex = { [url: string]: boolean };
 
@@ -34,40 +34,54 @@ request.defaults({
 
 export const parseSitemapFromUrl = (
   url: string,
+  options: IOptions = {},
   sitemapIndex: SitemapIndex = {}
 ): Promise<IPage[]> => {
   return new Promise((resolve, reject) => {
     const stream = request.get(url, { gzip: true });
     stream.on('error', reject);
-    return parse(url, stream, sitemapIndex).then(resolve);
+    return parse(url, stream, options, sitemapIndex).then(resolve);
   });
 };
 
 export const parseSitemapsFromUrls = (
   urls: string[],
+  options: IOptions = {},
   sitemapIndex: SitemapIndex = {}
 ) => {
   return Promise.all(
-    urls.map(url => parseSitemapFromUrl(url, sitemapIndex))
+    urls.map(url => parseSitemapFromUrl(url, options, sitemapIndex))
   ).then(flatten);
 };
 
-export const parseSitemapFromString = (baseUrl: string, xml: string) => {
-  return parse(baseUrl, toReadableStream(xml), {});
+export const parseSitemapFromString = (
+  baseUrl: string,
+  xml: string,
+  options: IOptions = {}
+) => {
+  return parse(baseUrl, toReadableStream(xml), options, {});
 };
 
 export const parseSitemap = (
   baseUrl: string,
-  xmlStream: Stream
+  xmlStream: Stream,
+  options: IOptions = {}
 ): Promise<IPage[]> => {
-  return parse(baseUrl, xmlStream, {});
+  return parse(baseUrl, xmlStream, options, {});
 };
 
 const parse = (
   baseUrl: string,
   xmlStream: Stream,
+  options: IOptions,
   visitedSitemaps: SitemapIndex
 ): Promise<IPage[]> => {
+  options = {
+    checkSitemap: () => true,
+    checkUrl: () => true,
+    ...options
+  };
+
   visitedSitemaps[baseUrl] = true;
 
   return new Promise((resolve, reject) => {
