@@ -34,7 +34,7 @@ request.defaults({
 
 export const parseSitemapFromUrl = (
   url: string,
-  options: IOptions = {},
+  options: Partial<IOptions> = {},
   sitemapIndex: SitemapIndex = {}
 ): Promise<IPage[]> => {
   return new Promise((resolve, reject) => {
@@ -46,7 +46,7 @@ export const parseSitemapFromUrl = (
 
 export const parseSitemapsFromUrls = (
   urls: string[],
-  options: IOptions = {},
+  options: Partial<IOptions> = {},
   sitemapIndex: SitemapIndex = {}
 ) => {
   return Promise.all(
@@ -57,7 +57,7 @@ export const parseSitemapsFromUrls = (
 export const parseSitemapFromString = (
   baseUrl: string,
   xml: string,
-  options: IOptions = {}
+  options: Partial<IOptions> = {}
 ) => {
   return parse(baseUrl, toReadableStream(xml), options, {});
 };
@@ -65,7 +65,7 @@ export const parseSitemapFromString = (
 export const parseSitemap = (
   baseUrl: string,
   xmlStream: Stream,
-  options: IOptions = {}
+  options: Partial<IOptions> = {}
 ): Promise<IPage[]> => {
   return parse(baseUrl, xmlStream, options, {});
 };
@@ -73,14 +73,18 @@ export const parseSitemap = (
 const parse = (
   baseUrl: string,
   xmlStream: Stream,
-  options: IOptions,
+  options: Partial<IOptions>,
   visitedSitemaps: SitemapIndex
 ): Promise<IPage[]> => {
-  options = {
+  const opts: IOptions = {
     checkSitemap: () => true,
     checkUrl: () => true,
     ...options
   };
+
+  if (visitedSitemaps[baseUrl] || !opts.checkSitemap(baseUrl)) {
+    return Promise.resolve([]);
+  }
 
   visitedSitemaps[baseUrl] = true;
 
@@ -126,7 +130,8 @@ const parse = (
     parserStream.on('closetag', tag => {
       if (tag === 'url') {
         state.url = false;
-        state.pages.push(state.currentPage);
+        if (opts.checkUrl(state.currentPage.url))
+          state.pages.push(state.currentPage);
         state.currentPage = emptyPage(baseUrl);
       }
 
