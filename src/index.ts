@@ -164,7 +164,6 @@ const parse = (
 
     parserStream.on('error', reject);
     parserStream.on('end', () => {
-      console.log('done'!);
       if (state.isSitemapIndex) {
         parseSitemapsFromUrls(state.sitemaps, options, visitedSitemaps).then(
           resolve
