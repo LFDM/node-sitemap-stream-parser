@@ -10,9 +10,12 @@ const run = () => {
   parseSitemapFromString(
     'http://example.com',
     readFile(path.join(BASE, 'sitemap.xml'))
-  ).then(results => {
-    console.log(results);
-  });
+  ).then(
+    results => {
+      console.log(results);
+    },
+    err => console.log('ERROR', err)
+  );
 };
 
 run();
