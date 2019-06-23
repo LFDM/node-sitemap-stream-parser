@@ -18,7 +18,8 @@
   },
   "scripts": {
     "build": "tsc --outDir dist --m CommonJs --resolveJsonModule -d src/index.ts",
-    "example": "ts-node src/examples/example.ts"
+    "example": "ts-node src/examples/example.ts",
+    "test": "jest"
   },
   "files": [
     "dist"
