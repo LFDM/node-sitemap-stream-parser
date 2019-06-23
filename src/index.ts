@@ -119,7 +119,9 @@ export const collect = (
   );
 };
 
-export const collectSitemapsFromRobots = (url: string): Promise<string[]> => {
+export const collectSitemapsFromRobotsUrl = (
+  url: string
+): Promise<string[]> => {
   return new Promise((resolve, reject) => {
     request.get(url, (err, res, body: string) => {
       if (err) {
@@ -128,15 +130,18 @@ export const collectSitemapsFromRobots = (url: string): Promise<string[]> => {
       if (res.statusCode !== 200) {
         return reject(`status code: ${res.statusCode}`);
       }
-      const matches: string[] = [];
-      body.replace(/^Sitemap:\s?([^\s]+)$/gim, (m, p1) => {
-        matches.push(p1);
-        return m;
-      });
-
-      resolve(matches);
+      resolve(collectSitemapsFromRobots(body));
     });
   });
+};
+
+export const collectSitemapsFromRobots = (robots: string): string[] => {
+  const matches: string[] = [];
+  robots.replace(/^Sitemap:\s?([^\s]+)$/gim, (m, p1) => {
+    matches.push(p1);
+    return m;
+  });
+  return matches;
 };
 
 const _parse = (

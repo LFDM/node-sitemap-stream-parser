@@ -1,0 +1,4 @@
+Sitemap: http://www.example.com/sitemap1.xml
+Sitemap: http://www.example.com/sitemap2.xml
+User-agent:*
+Disallow

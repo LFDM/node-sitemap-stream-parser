@@ -1,14 +1,15 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { collectFromString } from '.';
+import { collectFromString, collectSitemapsFromRobots } from '.';
 
 const BASE = path.join(__dirname, 'examples');
 const readFile = (p: string) => fs.readFileSync(p).toString();
 
 const sitemap = readFile(path.join(BASE, 'sitemap.xml'));
+const robots = readFile(path.join(BASE, 'robots.txt'));
 
 describe('collectFromString', () => {
-  it('runs', () => {
+  it('works', () => {
     return collectFromString('http//example.com', sitemap).then(pages => {
       expect(pages).toHaveLength(2);
 
@@ -26,4 +27,13 @@ describe('collectFromString', () => {
       expect(p2.sitemapUrl).toEqual('http//example.com');
     });
   });
+});
+
+describe('collectSitemapsFromRobots', () => {
+  const actual = collectSitemapsFromRobots(robots);
+  const expected = [
+    'http://www.example.com/sitemap1.xml',
+    'http://www.example.com/sitemap2.xml'
+  ];
+  expect(actual).toEqual(expected);
 });
