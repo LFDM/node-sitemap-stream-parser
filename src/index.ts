@@ -28,7 +28,7 @@ export const parseSitemapFromUrl = (url: string): Promise<IPage[]> => {
   return new Promise((resolve, reject) => {
     const stream = request.get(url, { gzip: true });
     stream.on('error', reject);
-    return parseSitemap(stream).then(resolve);
+    return parseSitemap(url, stream).then(resolve);
   });
 };
 
@@ -37,17 +37,14 @@ export const parseSitemapsFromUrls = (urls: string[]) => {
   return Promise.all(urls.map(parseSitemapFromUrl)).then(flatten);
 };
 
-export const parseSitemapFromString = (xml: string) => {
-  return parseSitemap(toReadableStream(xml));
+export const parseSitemapFromString = (baseUrl: string, xml: string) => {
+  return parseSitemap(baseUrl, toReadableStream(xml));
 };
 
-export const parseSitemapsFromStrings = (xmls: string[]) => {
-  return Promise.all(xmls.map(toReadableStream).map(parseSitemap)).then(
-    flatten
-  );
-};
-
-export const parseSitemap = (xmlStream: Stream): Promise<IPage[]> => {
+export const parseSitemap = (
+  baseUrl: string,
+  xmlStream: Stream
+): Promise<IPage[]> => {
   return new Promise((resolve, reject) => {
     const parserStream = sax.createStream(false, {
       trim: true,
