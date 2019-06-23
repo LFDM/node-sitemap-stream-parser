@@ -16,6 +16,12 @@ const toReadableStream = (str: string) => {
   return stream;
 };
 
+const emptyPage = (baseUrl: string): IPage => ({
+  url: '',
+  lastModified: '',
+  sitemapUrl: baseUrl
+});
+
 request.defaults({
   headers: {
     'user-agent': process.env.SITEMAP_PARSER_USER_AGENT || 'sitemap-parser'
@@ -37,22 +43,18 @@ export const parseSitemapFromUrl = (
   });
 };
 
-export const parseSitemapsFromUrls = (urls: string[]) => {
-  const index: SitemapIndex = {};
-  return Promise.all(urls.map(url => parseSitemapFromUrl(url, index))).then(
-    flatten
-  );
+export const parseSitemapsFromUrls = (
+  urls: string[],
+  sitemapIndex: SitemapIndex = {}
+) => {
+  return Promise.all(
+    urls.map(url => parseSitemapFromUrl(url, sitemapIndex))
+  ).then(flatten);
 };
 
 export const parseSitemapFromString = (baseUrl: string, xml: string) => {
   return parse(baseUrl, toReadableStream(xml), {});
 };
-
-const emptyPage = (baseUrl: string): IPage => ({
-  url: '',
-  lastModified: '',
-  sitemapUrl: baseUrl
-});
 
 export const parseSitemap = (
   baseUrl: string,
@@ -145,7 +147,7 @@ const parse = (
     parserStream.on('end', () => {
       console.log('done'!);
       if (state.isSitemapIndex) {
-        parseSitemapsFromUrls(state.sitemaps).then(resolve);
+        parseSitemapsFromUrls(state.sitemaps, visitedSitemaps).then(resolve);
         return;
       }
 
