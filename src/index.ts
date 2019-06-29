@@ -128,7 +128,7 @@ export const collectSitemapsFromRobotsUrl = (
         return reject(err);
       }
       if (res.statusCode !== 200) {
-        return reject(`status code: ${res.statusCode}`);
+        return resolve([]);
       }
       resolve(collectSitemapsFromRobots(body));
     });
