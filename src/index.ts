@@ -5,7 +5,7 @@ import * as urlParser from 'url';
 import { IOptions, IPage } from './types';
 
 type SitemapIndex = { [url: string]: boolean };
-type PageCallback = (page: IPage) => void;
+type PageCallback = (page: IPage) => boolean;
 
 request.defaults({
   headers: {
@@ -38,12 +38,15 @@ const withPageCollector = (
   fn: (onPage: PageCallback) => Promise<any>
 ): Promise<IPage[]> => {
   const pages: IPage[] = [];
-  return fn(page => pages.push(page)).then(() => pages);
+  return fn(page => {
+    pages.push(page);
+    return true;
+  }).then(() => pages);
 };
 
 export const parseFromUrl = (
   url: string,
-  onPage: (page: IPage) => void,
+  onPage: PageCallback,
   options: Partial<IOptions> = {},
   sitemapIndex: SitemapIndex = {}
 ) => {
@@ -52,7 +55,7 @@ export const parseFromUrl = (
 
 export const parseFromUrls = (
   urls: string[],
-  onPage: (page: IPage) => void,
+  onPage: PageCallback,
   options: Partial<IOptions> = {},
   sitemapIndex: SitemapIndex = {}
 ) => {
@@ -149,7 +152,7 @@ const _parse = (
   xmlStream: Stream,
   options: Partial<IOptions>,
   visitedSitemaps: SitemapIndex,
-  onPage: (page: IPage) => void
+  onPage: PageCallback
 ): Promise<void> => {
   const opts: IOptions = {
     checkSitemap: () => true,
@@ -204,7 +207,11 @@ const _parse = (
       if (tag === 'url') {
         state.url = false;
         if (opts.checkUrl(state.currentPage.url)) {
-          onPage(state.currentPage);
+          const continueSttreaming = onPage(state.currentPage);
+          if (!continueSttreaming) {
+            parserStream.destroy();
+            return resolve();
+          }
         }
         state.currentPage = emptyPage(baseUrl);
       }
