@@ -175,7 +175,9 @@ const _parse = (
       isSitemapIndex: false,
 
       currentPage: emptyPage(baseUrl),
-      sitemaps: [] as string[]
+      sitemaps: [] as string[],
+
+      manuallyEnded: false
     };
 
     const parserStream = sax.createStream(false, {
@@ -185,6 +187,10 @@ const _parse = (
     });
 
     parserStream.on('opentag', node => {
+      if (state.manuallyEnded) {
+        return;
+      }
+
       if (node.name === 'url') {
         state.url = true;
       }
@@ -204,13 +210,18 @@ const _parse = (
     });
 
     parserStream.on('closetag', tag => {
+      if (state.manuallyEnded) {
+        return;
+      }
+
       if (tag === 'url') {
         state.url = false;
         if (opts.checkUrl(state.currentPage.url)) {
-          const continueSttreaming = onPage(state.currentPage);
-          if (!continueSttreaming) {
-            parserStream.destroy();
-            return resolve();
+          const continueStreaming = onPage(state.currentPage);
+          if (!continueStreaming) {
+            state.manuallyEnded = true;
+            // parserStream.end(); // doesn't actually end - this is broken!
+            return;
           }
         }
         state.currentPage = emptyPage(baseUrl);
@@ -225,6 +236,10 @@ const _parse = (
     });
 
     parserStream.on('text', t => {
+      if (state.manuallyEnded) {
+        return;
+      }
+
       if (state.isSitemap) {
         if (state.url) {
           if (state.loc) {
@@ -244,6 +259,7 @@ const _parse = (
     });
 
     parserStream.on('error', reject);
+
     parserStream.on('end', () => {
       if (state.isSitemapIndex) {
         parseFromUrls(state.sitemaps, onPage, options, visitedSitemaps).then(
