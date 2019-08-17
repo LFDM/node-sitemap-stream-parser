@@ -1,10 +1,7 @@
 {
   "name": "node-sitemap-stream-parser",
-  "version": "0.1.0-rc7",
+  "version": "0.1.0-rc8",
   "main": "dist/index.js",
-  "bin": {
-    "node-sitemap-stream-parser": "dist/cli.js"
-  },
   "typings": "dist/index.d.ts",
   "dependencies": {
     "got": "^9.6.0",
