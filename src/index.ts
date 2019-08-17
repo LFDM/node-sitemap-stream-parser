@@ -1,6 +1,6 @@
 import * as got_ from 'got';
 import * as sax from 'sax';
-import { Stream } from 'stream';
+import { pipeline, Readable, Stream } from 'stream';
 import * as urlParser from 'url';
 import { IOptions, IPage } from './types';
 
@@ -23,9 +23,7 @@ const toStreamFromString = (str: string) => {
 };
 
 const toStreamFromUrl = (url: string) => {
-  return got.stream(url).on('error', err => {
-    console.error(`Failed to stream ${url}`, err);
-  });
+  return got.stream(url);
 };
 
 const emptyPage = (baseUrl: string): IPage => ({
@@ -75,7 +73,7 @@ export const parseFromString = (
 
 export const parse = (
   baseUrl: string,
-  xmlStream: Stream,
+  xmlStream: Readable,
   onPage: PageCallback,
   options: Partial<IOptions> = {}
 ) => {
@@ -114,7 +112,7 @@ export const collectFromString = (
 
 export const collect = (
   baseUrl: string,
-  xmlStream: Stream,
+  xmlStream: Readable,
   options: Partial<IOptions> = {}
 ) => {
   return withPageCollector(onPage =>
@@ -142,7 +140,7 @@ export const collectSitemapsFromRobots = (robots: string): string[] => {
 
 const _parse = (
   baseUrl: string,
-  xmlStream: Stream,
+  xmlStream: Readable,
   options: Partial<IOptions>,
   visitedSitemaps: SitemapIndex,
   onPage: PageCallback
@@ -251,8 +249,6 @@ const _parse = (
       }
     });
 
-    parserStream.on('error', reject);
-
     parserStream.on('end', () => {
       if (state.isSitemapIndex) {
         parseFromUrls(state.sitemaps, onPage, options, visitedSitemaps).then(
@@ -264,6 +260,6 @@ const _parse = (
       resolve();
     });
 
-    xmlStream.pipe(parserStream);
+    pipeline(xmlStream, parserStream, reject);
   });
 };
