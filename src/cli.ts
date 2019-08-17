@@ -5,7 +5,7 @@ export const run = (url: string) => {
   parseFromUrl(url, p => {
     console.log(`${p.url} - ${p.lastModified}`);
     return true;
-  }).catch(err => console.log(err));
+  }).catch(err => console.log('ERROR', err));
 };
 
 run(process.argv[2]);
