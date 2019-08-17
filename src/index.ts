@@ -25,7 +25,9 @@ const toStreamFromString = (str: string) => {
 };
 
 const toStreamFromUrl = (url: string) => {
-  return request.get(url, { gzip: true });
+  return request.get(url, { gzip: true }).on('error', err => {
+    console.error(`Failed to stream ${url}`, err);
+  });
 };
 
 const emptyPage = (baseUrl: string): IPage => ({
