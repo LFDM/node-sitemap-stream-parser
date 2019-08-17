@@ -23,5 +23,8 @@
   },
   "files": [
     "dist"
-  ]
+  ],
+  "engines": {
+    "node": "10"
+  }
 }
