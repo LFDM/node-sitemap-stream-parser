@@ -1,5 +1,4 @@
-import * as got from 'got';
-import * as request from 'request';
+import * as got_ from 'got';
 import * as sax from 'sax';
 import { Stream } from 'stream';
 import * as urlParser from 'url';
@@ -8,12 +7,9 @@ import { IOptions, IPage } from './types';
 type SitemapIndex = { [url: string]: boolean };
 type PageCallback = (page: IPage) => boolean;
 
-request.defaults({
+const got = got_.extend({
   headers: {
     'user-agent': process.env.SITEMAP_PARSER_USER_AGENT || 'sitemap-parser'
-  },
-  agentOptions: {
-    keepAlive: true
   },
   timeout: parseInt(process.env.SITEMAP_PARSER_TIMEOUT || '', 10) || 60000
 });
@@ -128,17 +124,10 @@ export const collect = (
 export const collectSitemapsFromRobotsUrl = (
   url: string
 ): Promise<string[]> => {
-  return new Promise((resolve, reject) => {
-    request.get(url, (err, res, body: string) => {
-      if (err) {
-        return reject(err);
-      }
-      if (res.statusCode !== 200) {
-        return resolve([]);
-      }
-      resolve(collectSitemapsFromRobots(body));
-    });
-  });
+  return got
+    .get(url)
+    .then(r => collectSitemapsFromRobots(r.body))
+    .catch(() => []);
 };
 
 export const collectSitemapsFromRobots = (robots: string): string[] => {
