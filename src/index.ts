@@ -9,7 +9,8 @@ type PageCallback = (page: IPage) => boolean;
 
 const got = got_.extend({
   headers: {
-    'user-agent': process.env.SITEMAP_PARSER_USER_AGENT || 'sitemap-parser'
+    'user-agent':
+      process.env.SITEMAP_PARSER_USER_AGENT || 'node-sitemap-stream-parser'
   },
   timeout: parseInt(process.env.SITEMAP_PARSER_TIMEOUT || '', 10) || 60000
 });
