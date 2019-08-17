@@ -1,3 +1,4 @@
+import * as got from 'got';
 import * as request from 'request';
 import * as sax from 'sax';
 import { Stream } from 'stream';
@@ -25,7 +26,7 @@ const toStreamFromString = (str: string) => {
 };
 
 const toStreamFromUrl = (url: string) => {
-  return request.get(url, { gzip: true }).on('error', err => {
+  return got.stream(url).on('error', err => {
     console.error(`Failed to stream ${url}`, err);
   });
 };

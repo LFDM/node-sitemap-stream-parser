@@ -7,11 +7,13 @@
   },
   "typings": "dist/index.d.ts",
   "dependencies": {
+    "got": "^9.6.0",
     "request": "^2.88.0",
     "sax": "^1.2.4",
     "typescript": "3.5.2"
   },
   "devDependencies": {
+    "@types/got": "^9.6.7",
     "@types/jest": "^24.0.15",
     "@types/request": "^2.48.1",
     "@types/sax": "^1.2.0",
