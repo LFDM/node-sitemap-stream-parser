@@ -7,5 +7,6 @@ export interface IPage {
 export interface IOptions {
   checkSitemap: (url: string) => boolean;
   checkUrl: (url: string) => boolean;
-  ignoreStreamErrors: boolean;
+  // resolve promise to ignore error
+  onError: (err: any) => Promise<void>;
 }

@@ -148,7 +148,7 @@ const _parse = (
   const opts: IOptions = {
     checkSitemap: () => true,
     checkUrl: () => true,
-    ignoreStreamErrors: false,
+    onError: err => Promise.reject(err),
     ...options
   };
 
@@ -262,10 +262,7 @@ const _parse = (
     });
 
     pipeline(xmlStream, parserStream, err => {
-      if (opts.ignoreStreamErrors) {
-        return resolve();
-      }
-      reject(err);
+      opts.onError(err).then(resolve, reject);
     });
   });
 };
