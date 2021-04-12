@@ -19,7 +19,8 @@
   "scripts": {
     "build": "tsc --outDir dist --m CommonJs --resolveJsonModule -d src/index.ts",
     "prepublish": "npm run test && npm run build",
-    "test": "jest"
+    "test": "jest",
+    "cli": "ts-node src/cli.ts"
   },
   "files": [
     "dist"
