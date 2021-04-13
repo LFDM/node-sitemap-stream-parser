@@ -16,7 +16,7 @@
     "ts-node": "^8.3.0"
   },
   "scripts": {
-    "build": "tsc --outDir dist --m CommonJs --resolveJsonModule -d src/index.ts",
+    "build": "tsc --outDir dist --target es5 --skipLibCheck --m CommonJs --resolveJsonModule -d src/index.ts",
     "prepublish": "npm run test && npm run build",
     "test": "jest",
     "cli": "ts-node src/cli.ts"
