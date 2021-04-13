@@ -1,6 +1,6 @@
 {
   "name": "node-sitemap-stream-parser",
-  "version": "0.1.0-rc10",
+  "version": "0.1.0-rc11",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "dependencies": {
