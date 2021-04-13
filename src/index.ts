@@ -1,7 +1,8 @@
-import * as got_ from 'got';
+import got_ from 'got';
 import * as sax from 'sax';
 import { pipeline, Readable, Stream } from 'stream';
 import * as urlParser from 'url';
+import * as zlib from 'zlib';
 import { IOptions, IPage } from './types';
 
 type SitemapIndex = { [url: string]: boolean };
@@ -14,15 +15,25 @@ const got = got_.extend({
   }
 });
 
-const toStreamFromString = (str: string) => {
+const toStreamFromString = async (str: string) => {
   const stream = new Stream.Readable();
   stream.push(str);
   stream.push(null);
   return stream;
 };
 
-const toStreamFromUrl = (url: string) => {
-  return got.stream(url);
+const toStreamFromUrl = async (url: string) => {
+  return new Promise<Readable>((resolve, reject) => {
+    const stream = got.stream(url);
+    stream.on('response', (res: any) => {
+      if (res && res.headers['content-type'] === 'application/x-gzip') {
+        resolve(got.stream(url).pipe(zlib.createGunzip()));
+      } else {
+        resolve(stream);
+      }
+    });
+    stream.on('error', reject);
+  });
 };
 
 const emptyPage = (baseUrl: string): IPage => ({
@@ -35,7 +46,7 @@ const withPageCollector = (
   fn: (onPage: PageCallback) => Promise<any>
 ): Promise<IPage[]> => {
   const pages: IPage[] = [];
-  return fn(page => {
+  return fn((page) => {
     pages.push(page);
     return true;
   }).then(() => pages);
@@ -57,7 +68,7 @@ export const parseFromUrls = (
   sitemapIndex: SitemapIndex = {}
 ) => {
   return Promise.all(
-    urls.map(url => parseFromUrl(url, onPage, options, sitemapIndex))
+    urls.map((url) => parseFromUrl(url, onPage, options, sitemapIndex))
   );
 };
 
@@ -76,7 +87,7 @@ export const parse = (
   onPage: PageCallback,
   options: Partial<IOptions> = {}
 ) => {
-  return _parse(baseUrl, xmlStream, options, {}, onPage);
+  return _parse(baseUrl, Promise.resolve(xmlStream), options, {}, onPage);
 };
 
 export const collectFromUrl = (
@@ -84,7 +95,7 @@ export const collectFromUrl = (
   options: Partial<IOptions> = {},
   sitemapIndex: SitemapIndex = {}
 ) => {
-  return withPageCollector(onPage =>
+  return withPageCollector((onPage) =>
     parseFromUrl(url, onPage, options, sitemapIndex)
   );
 };
@@ -94,7 +105,7 @@ export const collectFromUrls = (
   options: Partial<IOptions> = {},
   sitemapIndex: SitemapIndex = {}
 ) => {
-  return withPageCollector(onPage =>
+  return withPageCollector((onPage) =>
     parseFromUrls(urls, onPage, options, sitemapIndex)
   );
 };
@@ -104,7 +115,7 @@ export const collectFromString = (
   xml: string,
   options: Partial<IOptions> = {}
 ) => {
-  return withPageCollector(onPage =>
+  return withPageCollector((onPage) =>
     parseFromString(baseUrl, xml, onPage, options)
   );
 };
@@ -114,7 +125,7 @@ export const collect = (
   xmlStream: Readable,
   options: Partial<IOptions> = {}
 ) => {
-  return withPageCollector(onPage =>
+  return withPageCollector((onPage) =>
     parse(baseUrl, xmlStream, onPage, options)
   );
 };
@@ -124,7 +135,7 @@ export const collectSitemapsFromRobotsUrl = (
 ): Promise<string[]> => {
   return got
     .get(url)
-    .then(r => collectSitemapsFromRobots(r.body))
+    .then((r) => collectSitemapsFromRobots(r.body))
     .catch(() => []);
 };
 
@@ -139,7 +150,7 @@ export const collectSitemapsFromRobots = (robots: string): string[] => {
 
 const _parse = (
   baseUrl: string,
-  xmlStream: Readable,
+  xmlStreamLazy: Promise<Readable>,
   options: Partial<IOptions>,
   visitedSitemaps: SitemapIndex,
   onPage: PageCallback
@@ -147,7 +158,7 @@ const _parse = (
   const opts: IOptions = {
     checkSitemap: () => true,
     checkUrl: () => true,
-    onError: err => Promise.reject(err),
+    onError: (err) => Promise.reject(err),
     ...options
   };
 
@@ -157,7 +168,7 @@ const _parse = (
 
   visitedSitemaps[baseUrl] = true;
 
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const state = {
       url: false,
       loc: false,
@@ -177,7 +188,7 @@ const _parse = (
       lowercase: true
     });
 
-    parserStream.on('opentag', node => {
+    parserStream.on('opentag', (node) => {
       if (state.manuallyEnded) {
         return;
       }
@@ -200,7 +211,7 @@ const _parse = (
       }
     });
 
-    parserStream.on('closetag', tag => {
+    parserStream.on('closetag', (tag) => {
       if (state.manuallyEnded) {
         return;
       }
@@ -226,7 +237,7 @@ const _parse = (
       }
     });
 
-    parserStream.on('text', t => {
+    parserStream.on('text', (t) => {
       if (state.manuallyEnded) {
         return;
       }
@@ -263,8 +274,14 @@ const _parse = (
       resolve();
     });
 
-    pipeline(xmlStream, parserStream, err => {
-      opts.onError(err).then(resolve, reject);
-    });
+    try {
+      const xmlStream = await xmlStreamLazy;
+
+      pipeline(xmlStream, parserStream, (err) => {
+        opts.onError(err).then(resolve, reject);
+      });
+    } catch (err) {
+      reject(err);
+    }
   });
 };
