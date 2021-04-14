@@ -281,7 +281,7 @@ const _parse = (
         opts.onError(err).then(resolve, reject);
       });
     } catch (err) {
-      reject(err);
+      opts.onError(err).then(resolve, reject);
     }
   });
 };
