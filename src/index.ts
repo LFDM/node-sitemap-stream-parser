@@ -124,7 +124,7 @@ export const parseFromUrls = (
 ) => {
   return processParallelCapped(
     urls.map((url) => () => parseFromUrl(url, onPage, options, sitemapIndex)),
-    4
+    options.maxParallelSitemapsProcessed || 4
   );
 };
 

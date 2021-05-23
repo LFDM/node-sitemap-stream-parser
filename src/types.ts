@@ -9,4 +9,5 @@ export interface IOptions {
   checkUrl: (url: string) => boolean;
   // resolve promise to ignore error
   onError: (err: any) => Promise<void>;
+  maxParallelSitemapsProcessed?: number;
 }
