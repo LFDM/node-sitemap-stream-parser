@@ -51,6 +51,61 @@ const withPageCollector = (
     return true;
   }).then(() => pages);
 };
+type QueueItem<T> = {
+  fn: () => Promise<T>;
+  started: boolean;
+  done: boolean;
+};
+
+export const processParallelCapped = async <T>(
+  fns: (() => Promise<T>)[],
+  capSize: number
+): Promise<T[]> => {
+  if (!fns.length) {
+    return Promise.resolve([]);
+  }
+  return new Promise((resolve, reject) => {
+    const results: T[] = [];
+    const errors: any[] = [];
+    const queue: QueueItem<T>[] = fns.map((fn) => ({
+      fn,
+      started: false,
+      done: false
+    }));
+    const processNext = () => {
+      const nextItem = queue.find((item) => !item.started);
+      if (nextItem) {
+        // tslint:disable-next-line
+        processItem(nextItem);
+      } else {
+        if (queue.every((item) => item.done)) {
+          if (errors.length) {
+            reject(errors);
+          } else {
+            resolve(results);
+          }
+        }
+      }
+    };
+    const processItem = (item: QueueItem<T>) => {
+      item.started = true;
+      item.fn().then(
+        (res) => {
+          results[queue.indexOf(item)] = res;
+          item.done = true;
+          processNext();
+        },
+        (err) => {
+          errors.push(err);
+          item.done = true;
+          processNext();
+        }
+      );
+    };
+
+    queue.slice(0, capSize).forEach(processItem);
+  });
+};
 
 export const parseFromUrl = (
   url: string,
@@ -67,8 +122,9 @@ export const parseFromUrls = (
   options: Partial<IOptions> = {},
   sitemapIndex: SitemapIndex = {}
 ) => {
-  return Promise.all(
-    urls.map((url) => parseFromUrl(url, onPage, options, sitemapIndex))
+  return processParallelCapped(
+    urls.map((url) => () => parseFromUrl(url, onPage, options, sitemapIndex)),
+    4
   );
 };
 
@@ -262,12 +318,9 @@ const _parse = (
 
     parserStream.on('end', () => {
       if (state.isSitemapIndex) {
-        parseFromUrls(
-          state.sitemaps,
-          onPage,
-          options,
-          visitedSitemaps
-        ).then(() => resolve());
+        parseFromUrls(state.sitemaps, onPage, options, visitedSitemaps).then(
+          () => resolve()
+        );
         return;
       }
 
