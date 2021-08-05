@@ -215,6 +215,7 @@ const _parse = (
     checkSitemap: () => true,
     checkUrl: () => true,
     onError: (err) => Promise.reject(err),
+    maxParallelSitemapsProcessed: 4,
     ...options
   };
 
