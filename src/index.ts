@@ -332,10 +332,10 @@ const _parse = (
       const xmlStream = await xmlStreamLazy;
 
       pipeline(xmlStream, parserStream, (err) => {
-        opts.onError(err).then(resolve, reject);
+        opts.onError(err, { url: baseUrl }).then(resolve, reject);
       });
     } catch (err) {
-      opts.onError(err).then(resolve, reject);
+      opts.onError(err, { url: baseUrl }).then(resolve, reject);
     }
   });
 };
