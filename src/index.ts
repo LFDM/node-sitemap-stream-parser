@@ -294,7 +294,7 @@ const _parse = (
       }
     });
 
-    parserStream.on('text', (t) => {
+    const handleText = (t: string) => {
       if (state.manuallyEnded) {
         return;
       }
@@ -315,7 +315,12 @@ const _parse = (
           state.sitemaps.push(urlParser.resolve(baseUrl, t));
         }
       }
-    });
+    };
+
+    parserStream.on('text', handleText);
+    // cdata might be used to escape the content of the tags
+    // we're interested in - we can treat it the same as text
+    parserStream.on('cdata', handleText);
 
     parserStream.on('end', () => {
       if (state.isSitemapIndex) {
