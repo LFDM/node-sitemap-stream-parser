@@ -26,7 +26,11 @@ const toStreamFromUrl = async (url: string) => {
   return new Promise<Readable>((resolve, reject) => {
     const stream = got.stream(url);
     stream.on('response', (res: any) => {
-      if (res && res.headers['content-type'] === 'application/x-gzip') {
+      if (
+        res &&
+        (res.headers['content-type'] === 'application/x-gzip' ||
+          res.headers['content-type'] === 'application/gzip')
+      ) {
         resolve(got.stream(url).pipe(zlib.createGunzip()));
       } else {
         resolve(stream);
