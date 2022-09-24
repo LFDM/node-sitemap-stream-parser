@@ -81,15 +81,13 @@ export const processParallelCapped = async <T>(
       if (nextItem) {
         // tslint:disable-next-line
         processItem(nextItem);
-      } else {
-        if (queue.every((item) => item.done)) {
-          if (errors.length) {
-            reject(errors);
-          } else {
-            resolve(results);
-          }
-        }
+        return;
       }
+      if (queue.every((item) => item.done) && errors.length) {
+        reject(errors);
+        return;
+      }
+      resolve(results);
     };
     const processItem = (item: QueueItem<T>) => {
       item.started = true;
@@ -303,21 +301,15 @@ const _parse = (
         return;
       }
 
-      if (state.isSitemap) {
-        if (state.url) {
-          if (state.loc) {
-            state.currentPage.url = urlParser.resolve(baseUrl, t);
-          }
-          if (state.lastmod) {
-            state.currentPage.lastModified = t;
-          }
-        }
+      if (state.isSitemap && state.url && state.loc) {
+        state.currentPage.url = urlParser.resolve(baseUrl, t);
+      }
+      if (state.lastmod) {
+        state.currentPage.lastModified = t;
       }
 
-      if (state.isSitemapIndex) {
-        if (state.loc) {
-          state.sitemaps.push(urlParser.resolve(baseUrl, t));
-        }
+      if (state.isSitemapIndex && state.loc) {
+        state.sitemaps.push(urlParser.resolve(baseUrl, t));
       }
     };
 
